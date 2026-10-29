@@ -45,3 +45,11 @@ subprojects {
         }
     }
 }
+
+// Kotlin 2.1's Wasm linker cannot run inside the Gradle daemon (it loses its runtime resources
+// and fails with an NPE in writeCompilationResult), so only the link step runs out of process.
+subprojects {
+    tasks.withType<org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrLink>().configureEach {
+        compilerExecutionStrategy.set(org.jetbrains.kotlin.gradle.tasks.KotlinCompilerExecutionStrategy.OUT_OF_PROCESS)
+    }
+}

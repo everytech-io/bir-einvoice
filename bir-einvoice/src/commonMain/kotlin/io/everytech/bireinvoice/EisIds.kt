@@ -1,5 +1,7 @@
 package io.everytech.bireinvoice
 
+import kotlin.jvm.JvmStatic
+
 /** The identifier formats EIS expects. */
 public object EisIds {
     private const val CONTROL_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -18,11 +20,11 @@ public object EisIds {
         val date = issueDate.replace("-", "")
         require(DATE8.matches(date)) { "issue date \"$issueDate\" is not YYYY-MM-DD" }
         require(CERT.matches(eisCertNumber)) { "EIS Cert Number \"$eisCertNumber\" must be 8 letters or digits" }
-        return date + eisCertNumber + EisCrypto.randomString(8, CONTROL_ALPHABET)
+        return date + eisCertNumber + secureRandomString(8, CONTROL_ALPHABET)
     }
 
     /** `<EIS Cert Number>-<YYYYMMDD>-<12 lowercase hex>`, with the date in Manila time. */
     @JvmStatic
     public fun submitId(eisCertNumber: String, manilaDate: String): String =
-        "$eisCertNumber-${manilaDate.replace("-", "")}-${EisCrypto.randomString(12, HEX)}"
+        "$eisCertNumber-${manilaDate.replace("-", "")}-${secureRandomString(12, HEX)}"
 }
