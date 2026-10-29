@@ -295,6 +295,18 @@ This repository links to BIR documents and does not redistribute them.
 [docs/eis-api.openapi.yaml](docs/eis-api.openapi.yaml) an OpenAPI description written from the
 guide. When they disagree with BIR's documents, BIR's documents win.
 
+## Reporting bugs
+
+Open an issue with the
+[bug report form](https://github.com/everytech-io/bir-einvoice/issues/new?template=bug_report.yml).
+It asks for the library version, your Kotlin or Java version, the EIS error code, and a minimal
+code snippet. A snippet that fails against `MockEisServer` is the quickest to fix.
+
+Issues are public. Leave out TINs, customer details, real invoices, EIS credentials, keys and
+tokens; use made-up values. Security problems never go in a public issue: see
+[SECURITY.md](SECURITY.md). Problems in the desktop app belong in
+[everytech-io/einvoice](https://github.com/everytech-io/einvoice/issues).
+
 ## Building
 
 ```bash

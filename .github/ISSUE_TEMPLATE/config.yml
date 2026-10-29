@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security problem
+    url: https://github.com/everytech-io/bir-einvoice/security/policy
+    about: Report vulnerabilities privately with Report a vulnerability. Never in a public issue.
+  - name: EveryTech e-Invoice desktop app
+    url: https://github.com/everytech-io/einvoice/issues
+    about: Problems in the desktop app go to its own repository.
