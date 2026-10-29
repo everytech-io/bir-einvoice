@@ -172,9 +172,20 @@ try {
 }
 ```
 
-The typed `CasInvoice` model uses Kotlin value classes for amounts, which Java cannot construct
-directly. From Java, build the JSON yourself (the field table is in
-[docs/EIS-API-SPEC.md](docs/EIS-API-SPEC.md)) and check it with `CasValidator`.
+Java can also build the typed model and let the library write the JSON:
+
+```java
+Amount zero = new Amount(0L);                       // integer hundredths: new Amount(85000L) is 850.00
+CasItem item = new CasItem("Widget", "Blue", new Amount(300L), "pc", new Amount(100_000L),
+    new Amount(300_000L), zero, zero, new Amount(300_000L));
+CasInvoice invoice = new CasInvoice("INV-00000001", "20261029", uid, EisCodes.DOC_INVOICE,
+    EisCodes.TRANS_VATABLE, "N", "", "", "",
+    new SellerInfo("123456789", "00000", EisCodes.SELLER_VAT, "SAMPLE TRADING CORP.", "", "", "Makati City"),
+    new BuyerInfo("987654321", "00000", "BUYER INC.", "", "", "", "", "", "", "", ""),
+    List.of(item), new Amount(300_000L), new Discount(zero, zero, zero, zero, ""), zero,
+    new Amount(300_000L), new Amount(36_000L), zero, zero, zero, zero, new Amount(336_000L), null, "AC-0001");
+String json = EisJson.encode(invoice);   // "VATAmt":360.00
+```
 
 ## Testing against the mock
 

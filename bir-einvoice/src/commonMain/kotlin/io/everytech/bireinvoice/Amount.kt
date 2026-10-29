@@ -14,7 +14,6 @@ import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonUnquotedLiteral
-import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmStatic
 import kotlin.math.abs
 
@@ -24,9 +23,10 @@ import kotlin.math.abs
  * Money never goes through floating point. In EIS JSON it is written as an unquoted number with
  * exactly two decimals (`850.00`, `-0.05`), which is what the BIR JSON format asks for.
  */
-@JvmInline
+// A plain class rather than a value class, so Java callers can write `new Amount(85000)` and
+// construct CasInvoice directly. The allocation cost is irrelevant at invoice volumes.
 @Serializable(with = AmountSerializer::class)
-public value class Amount(public val hundredths: Long) : Comparable<Amount> {
+public data class Amount(public val hundredths: Long) : Comparable<Amount> {
     public operator fun plus(other: Amount): Amount = Amount(hundredths + other.hundredths)
 
     public operator fun minus(other: Amount): Amount = Amount(hundredths - other.hundredths)
