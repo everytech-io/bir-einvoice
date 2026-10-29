@@ -1,0 +1,500 @@
+openapi: 3.0.3
+info:
+  title: BIR EIS e-invoice API (unofficial OpenAPI description)
+  version: "2.3"
+  description: |
+    Unofficial OpenAPI 3 description of the BIR Electronic Invoicing System (EIS) e-invoice API,
+    written by EveryTech from the official EIS e-invoice API Development Guide v2.3 (30 Jul 2026)
+    and the e-invoice JSON File Format v2.1 / CAS sheet v2.2 (26 Sep 2026), both on the EIS
+    Certification Portal Downloads page (https://eis-cert.bir.gov.ph/#/downloads/1331).
+
+    This file is not issued, reviewed, or endorsed by the BIR. When it disagrees with the
+    official guide, the guide is right.
+
+    How the pieces fit:
+    1. `POST /api/authentication` with credentials RSA-encrypted under the EIS public key. The
+       response `data` is AES-256-CBC encrypted with the 32-char `authKey` you sent and holds the
+       `authToken` and `sessionKey` (valid 6 hours).
+    2. `POST /api/invoices` with 1 to 100 e-invoices. Each e-invoice is a `CasInvoice` JSON signed
+       as a JWS (RS256, `kid` = your signing key ID). The JWS strings are joined with commas and
+       AES-256-CBC encrypted with the session key.
+    3. `GET /api/invoice_result/{submitId}` until `processStatusCode` is `01`.
+
+    Every request carries an HMAC header:
+    `authorization: Bearer base64(HMAC-SHA256(key, datetime + METHOD + path))`, where `key` is the
+    application key for authentication and the session key for every other call, `datetime` is
+    the `datetime` header (`yyyyMMddHHmmss`, Philippine time), and `path` excludes the host.
+
+    AES-256-CBC details: key = the 32 ASCII bytes of the key string, IV = its first 16 characters,
+    PKCS#5/7 padding, base64 output. RSA: PKCS#1 v1.5, base64 output.
+  contact:
+    name: EveryTech e-invoice (open source)
+    url: https://everytech.io
+  license:
+    name: Apache-2.0 (this description file only)
+    url: https://www.apache.org/licenses/LICENSE-2.0
+servers:
+  - url: https://eis-cert.bir.gov.ph
+    description: EIS Certification sandbox (from the v2.3 guide and the official sample code)
+  - url: "{productionBaseUrl}"
+    description: Production. The guide does not state the host; copy it from the portal after the PTT is issued.
+    variables:
+      productionBaseUrl:
+        default: https://eis.bir.gov.ph
+        description: Placeholder. Confirm in the EIS Certification Portal.
+# EIS authenticates with per-request HMAC headers and encrypted bodies, not a standard scheme,
+# so the headers are declared as parameters on each operation instead.
+security: []
+tags:
+  - name: EIS API
+    description: Served by BIR. Called by the seller's system.
+  - name: Seller callback
+    description: Optional. Served by the seller's system and called by BIR.
+paths:
+  /api/authentication:
+    post:
+      tags: [EIS API]
+      operationId: authenticate
+      summary: Get an authentication token and session key (valid 6 hours)
+      parameters:
+        - $ref: "#/components/parameters/AccreditationId"
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/Datetime"
+        - $ref: "#/components/parameters/AuthorizationApplicationKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AuthenticationRequest" }
+            example:
+              data: "eneAZDnJP/5B6r/X6RyAlP3Jv6ZnnC1CzxENxpgpGKMjPK+HbfHK..."
+              forceRefreshToken: false
+      responses:
+        "200":
+          description: Token issued. `data` decrypts (AES-256-CBC, key = authKey) to AuthenticationData.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EncryptedSuccess" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/invoices:
+    post:
+      tags: [EIS API]
+      operationId: issueInvoices
+      summary: Submit 1 to 100 signed, encrypted e-invoices
+      description: |
+        `data` is AES-256-CBC(sessionKey) over `JWS1,JWS2,...,JWSn` (n = 1..100). Each JWS is the
+        compact serialization of a `CasInvoice` (or `PosInvoice`) JSON, header
+        `{"kid": "<signing key ID>", "alg": "RS256"}`.
+
+        Sandbox limit: one call per 10 seconds (E19). Production: only from whitelisted IPs (E07).
+      parameters:
+        - $ref: "#/components/parameters/AccreditationId"
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/AuthToken"
+        - $ref: "#/components/parameters/Datetime"
+        - $ref: "#/components/parameters/AuthorizationSessionKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InvoiceIssuanceRequest" }
+      responses:
+        "200":
+          description: Received. `data` decrypts (AES-256-CBC, session key) to InvoiceIssuanceData. Final verification happens later; poll the inquiry endpoint.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EncryptedSuccess" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/invoice_result/{submitId}:
+    get:
+      tags: [EIS API]
+      operationId: inquireResult
+      summary: Get the processing result of a submission
+      parameters:
+        - $ref: "#/components/parameters/AccreditationId"
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/AuthToken"
+        - $ref: "#/components/parameters/Datetime"
+        - $ref: "#/components/parameters/AuthorizationSessionKey"
+        - name: submitId
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/SubmitId" }
+      responses:
+        "200":
+          description: Result document. `data` is a plain JSON object in the guide and the official samples.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InquiryResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/receive_invoice_result:
+    servers:
+      - url: "{sellerBaseUrl}"
+        variables:
+          sellerBaseUrl:
+            default: https://eis-linkage.example.com
+            description: Your own callback host, registered on the application's Setting page.
+    put:
+      tags: [Seller callback]
+      operationId: receiveInvoiceResult
+      summary: (Optional) BIR pushes a processing result to the seller
+      description: The seller builds this. If it fails, EIS sends a callback-failure email (E17, E18).
+      parameters:
+        - $ref: "#/components/parameters/AccreditationId"
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/Datetime"
+        - $ref: "#/components/parameters/AuthorizationApplicationKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InquiryData" }
+      responses:
+        "200":
+          description: Acknowledged. `data` is AES-256-CBC encrypted per the guide (key = the authKey the seller's application provided).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EncryptedSuccess" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+components:
+  parameters:
+    AccreditationId:
+      name: accreditationId
+      in: header
+      required: true
+      description: EIS Cert Number (8 chars). First 2 digits = source type (10 web portal, 20 CAS, 31 POS, 32 CRM, 51 ASP-CAS, 52 ASP-POS).
+      schema: { type: string, minLength: 8, maxLength: 8, example: "20146IT4" }
+    ApplicationId:
+      name: applicationId
+      in: header
+      required: true
+      description: Application ID from the EIS Certification Portal.
+      schema: { type: string, example: "60xLDIL1" }
+    AuthToken:
+      name: authToken
+      in: header
+      required: true
+      description: Token from the authentication response (32 chars, valid 6 hours).
+      schema: { type: string, minLength: 32, maxLength: 32 }
+    Datetime:
+      name: datetime
+      in: header
+      required: true
+      description: Philippine time, yyyyMMddHHmmss. Must be within 10 minutes (guide) / 15 minutes (error table) of EIS time.
+      schema: { type: string, pattern: "^\\d{14}$", example: "20261029093015" }
+    AuthorizationApplicationKey:
+      name: authorization
+      in: header
+      required: true
+      description: "`Bearer ` + base64(HMAC-SHA256(applicationKey, datetime + METHOD + path))"
+      schema: { type: string, example: "Bearer 4C9VQAMV2Y18EN8C20PHT5O128SFONM3" }
+    AuthorizationSessionKey:
+      name: authorization
+      in: header
+      required: true
+      description: "`Bearer ` + base64(HMAC-SHA256(sessionKey, datetime + METHOD + path))"
+      schema: { type: string }
+  responses:
+    BadRequest:
+      description: Header or body has a wrong value or type.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Unauthorized:
+      description: Password, application key, or HMAC signature does not match.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: User ID, application ID, EIS Cert Number, or submit ID does not exist.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    ServerError:
+      description: Other error.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+  schemas:
+    Money:
+      type: number
+      description: PHP amount with 2 decimal places. Negative allowed (credit memos are negative).
+      example: 1234.50
+    SubmitId:
+      type: string
+      description: "<EIS Cert Number>-<YYYYMMDD>-<12 lowercase hex chars>; unique per submission."
+      pattern: "^[0-9A-Za-z]{8}-\\d{8}-[0-9a-f]{12}$"
+      example: "20146IT4-20261029-be3cfa2c0b1e"
+    AuthenticationRequest:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: string
+          format: byte
+          description: base64(RSA-PKCS1v1.5(EIS public key, UTF-8 JSON of AuthenticationRequestData))
+        forceRefreshToken:
+          type: boolean
+          default: false
+          description: Force a new token and session key. The official samples send the string "false".
+    AuthenticationRequestData:
+      type: object
+      description: Plaintext before RSA encryption.
+      required: [userId, password, authKey]
+      properties:
+        userId: { type: string, description: EIS Certification Portal user ID }
+        password: { type: string, description: "EIS Certification Portal password, in plain text" }
+        authKey:
+          type: string
+          minLength: 32
+          maxLength: 32
+          description: Random 32-character key; the response is encrypted with it (E24 if malformed).
+    AuthenticationData:
+      type: object
+      description: Decrypted `data` of a successful authentication response.
+      required: [accreditationId, userId, authToken, sessionKey, tokenExpiry]
+      properties:
+        accreditationId: { type: string }
+        userId: { type: string }
+        authToken: { type: string, minLength: 32, maxLength: 32 }
+        sessionKey: { type: string, minLength: 32, maxLength: 32, description: AES-256 key and HMAC key for this session }
+        tokenExpiry: { type: string, example: "2026-10-29T15:20:00", description: yyyy-MM-ddThh:mm:ss }
+    InvoiceIssuanceRequest:
+      type: object
+      required: [submitId, data]
+      properties:
+        submitId: { $ref: "#/components/schemas/SubmitId" }
+        data:
+          type: string
+          format: byte
+          description: base64(AES-256-CBC(sessionKey, "JWS1,JWS2,...")) with 1 to 100 JWS strings.
+    InvoiceIssuanceData:
+      type: object
+      description: Decrypted `data` of a successful invoice issuance response.
+      properties:
+        accreditationId: { type: string }
+        userId: { type: string }
+        refSubmitId: { $ref: "#/components/schemas/SubmitId" }
+        ackId: { type: string, example: "BIR-20261029154527-E8QN3" }
+        responseDtm: { type: string, example: "2026-10-29T15:45:28" }
+        description: { type: string, example: "Transmission has been successfully processed. EIS will process the final registration within the next business day." }
+    EncryptedSuccess:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: ["1", "0"] }
+        data: { type: string, format: byte, description: AES-256-CBC encrypted JSON (see the operation) }
+        errorDetails: { $ref: "#/components/schemas/ErrorDetails" }
+    InquiryResponse:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: ["1", "0"] }
+        data: { $ref: "#/components/schemas/InquiryData" }
+        errorDetails: { $ref: "#/components/schemas/ErrorDetails" }
+    InquiryData:
+      type: object
+      required: [accreditationId, userId, refSubmitId, ackId, responseDtm, processStatusCode]
+      properties:
+        accreditationId: { type: string }
+        userId: { type: string }
+        refSubmitId: { $ref: "#/components/schemas/SubmitId" }
+        ackId: { type: string }
+        responseDtm: { type: string }
+        processStatusCode:
+          type: string
+          enum: ["01", "02", "03"]
+          description: 01 processing completed, 02 in progress, 03 unable to process
+        failReasonStatusCode:
+          type: string
+          enum: [FRS001, FRS002]
+          description: Present when processStatusCode is 03. FRS001 submitId does not exist, FRS002 decryption failure.
+        totalCountQuantity: { type: integer }
+        successCountQuantity: { type: integer }
+        failCountQuantity: { type: integer }
+        processedDocuments:
+          type: array
+          description: Present when processStatusCode is 01. (The guide's table spells it "proccessdDocuments"; its examples use "processedDocuments".)
+          items: { $ref: "#/components/schemas/ProcessedDocument" }
+    ProcessedDocument:
+      type: object
+      required: [invoiceUid, resultStatusCode]
+      properties:
+        invoiceUid: { type: string, minLength: 24, maxLength: 24, description: EisUniqueId }
+        resultStatusCode: { $ref: "#/components/schemas/ResultStatusCode" }
+        description: { type: string, description: Present on errors }
+    ResultStatusCode:
+      type: string
+      description: |
+        SUC001 success; SYN002 invalid signature; SYN003 duplicate EisUniqueId; SYN004 schema error;
+        ERR001 seller TIN not registered; ERR002 issuance datetime error; ERR003 transmission datetime error;
+        ERR004 sales/VAT sign or nonzero VAT on exempt/zero-rated; ERR005 code type error;
+        ERR006 EIS Cert Number mismatch; ERR007 PrevUniqueId error; ERR011 document type;
+        ERR012 seller type; ERR013 RBE local sale by non-RBE; ERR014 transaction classification;
+        ERR015 TIN/branch not an RBE; ERR999 other.
+      enum: [SUC001, SYN002, SYN003, SYN004, ERR001, ERR002, ERR003, ERR004, ERR005, ERR006, ERR007, ERR011, ERR012, ERR013, ERR014, ERR015, ERR999]
+    ErrorResponse:
+      type: object
+      required: [status, errorDetails]
+      properties:
+        status: { type: string, enum: ["0"] }
+        errorDetails: { $ref: "#/components/schemas/ErrorDetails" }
+    ErrorDetails:
+      type: object
+      required: [errorCode, errorMessage]
+      properties:
+        errorCode:
+          type: string
+          enum: [E01, E02, E03, E04, E05, E06, E07, E08, E11, E12, E13, E14, E15, E16, E17, E18, E19, E21, E22, E23, E24, E31, E99]
+          description: See the API Error Solution Table v1.1 on the portal's Downloads page.
+        errorMessage: { type: string }
+    CasInvoice:
+      type: object
+      description: |
+        e-invoice JSON for a Computerized Accounting System (CAS sheet v2.2, 26 Sep 2026).
+        Signed as a JWS before encryption. String fields with no value are "" or null; number
+        fields with no value are 0.00. A mixed invoice is sent as one CasInvoice per TransClass.
+      required: [CompInvoiceId, IssueDtm, EisUniqueId, DocType, TransClass, CorrYN, SellerInfo, BuyerInfo, ItemList,
+        TotNetItemSales, Discount, OtherTaxRev, TotNetSalesAftDisct, VATAmt, WithholdIncome, WithholdBusVAT,
+        WithholdBusPT, OtherNonTaxCharge, NetAmtPay, PtuNum]
+      properties:
+        CompInvoiceId: { type: string, maxLength: 50, description: Seller's own invoice / credit memo number }
+        IssueDtm: { type: string, pattern: "^\\d{8}$", description: YYYYMMDD }
+        EisUniqueId:
+          type: string
+          pattern: "^\\d{8}[0-9A-Za-z]{8}[0-9A-Z]{8}$"
+          description: Issue date (YYYYMMDD) + EIS Cert Number (8) + 8 control chars [A-Z0-9]
+        DocType:
+          type: string
+          enum: ["01", "03"]
+          description: 01 Invoice, 03 Credit Memo/Credit Note (04 SB and 05 OR deleted in 2.3; 02 DM/DN removed in JSON 2.1)
+        TransClass:
+          type: string
+          enum: ["01", "02", "03", "04"]
+          description: 01 VATable, 02 Zero-rated, 03 VAT-exempt, 04 Local sales of Registered Business Enterprises
+        CorrYN: { type: string, enum: ["Y", "N"] }
+        CorrectionCd:
+          type: string
+          enum: ["", "01", "02", "03", "04", "05", "09"]
+          description: Required when CorrYN is Y. 01 error, 02 duplication, 03 addition/reduction, 04 cancellation, 05 return, 09 others
+        PrevUniqueId:
+          type: string
+          maxLength: 24
+          description: Required when CorrYN is Y. EisUniqueId being corrected; 24 zeros if the original is not managed in this system.
+        Rmk1: { type: string, maxLength: 500 }
+        SellerInfo: { $ref: "#/components/schemas/SellerInfo" }
+        BuyerInfo: { $ref: "#/components/schemas/BuyerInfo" }
+        ItemList:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items: { $ref: "#/components/schemas/CasItem" }
+        TotNetItemSales: { allOf: [{ $ref: "#/components/schemas/Money" }], description: Sum of NetSales }
+        Discount: { $ref: "#/components/schemas/Discount" }
+        OtherTaxRev: { $ref: "#/components/schemas/Money" }
+        TotNetSalesAftDisct: { allOf: [{ $ref: "#/components/schemas/Money" }], description: TotNetItemSales + OtherTaxRev - (ScAmt + PwdAmt + RegAmt + SpeAmt) }
+        VATAmt: { allOf: [{ $ref: "#/components/schemas/Money" }], description: Must be 0 for TransClass 02 and 03 }
+        WithholdIncome: { $ref: "#/components/schemas/Money" }
+        WithholdBusVAT: { $ref: "#/components/schemas/Money" }
+        WithholdBusPT: { $ref: "#/components/schemas/Money" }
+        OtherNonTaxCharge: { $ref: "#/components/schemas/Money" }
+        NetAmtPay: { $ref: "#/components/schemas/Money" }
+        ForCur: { $ref: "#/components/schemas/ForCur" }
+        PtuNum: { type: string, maxLength: 50, description: PTU / Acknowledgment Certificate control number of the CAS }
+    SellerInfo:
+      type: object
+      required: [Tin, BranchCd, Type, RegNm, RegAddr]
+      properties:
+        Tin: { type: string, pattern: "^\\d{9}$" }
+        BranchCd: { type: string, pattern: "^\\d{5}$", description: "00000 head office; branch 101 -> 00101" }
+        Type: { type: string, enum: ["0", "1", "2"], description: "0 VAT registered, 1 Non-VAT registered, 2 Registered Business Enterprise" }
+        RegNm: { type: string, maxLength: 200 }
+        BusinessNm: { type: string, maxLength: 200 }
+        Email: { type: string, maxLength: 100 }
+        RegAddr: { type: string, maxLength: 300 }
+    BuyerInfo:
+      type: object
+      required: [Tin, BranchCd, RegNm]
+      properties:
+        Tin: { type: string, pattern: "^\\d{9}$", description: "000000000 when the buyer has no TIN" }
+        BranchCd: { type: string, pattern: "^\\d{5}$" }
+        RegNm: { type: string, maxLength: 200 }
+        BusinessNm: { type: string, maxLength: 200 }
+        Email: { type: string, maxLength: 100 }
+        RegAddr: { type: string, maxLength: 300 }
+        DevAddr: { type: string, maxLength: 300, description: Delivery address }
+        AirNum: { type: string, maxLength: 50, description: Airway bill number (exporters) }
+        AirNumDt: { type: string, maxLength: 8, description: YYYYMMDD }
+        LadNum: { type: string, maxLength: 50, description: Bill of lading number (exporters) }
+        LadNumDt: { type: string, maxLength: 8, description: YYYYMMDD }
+    CasItem:
+      type: object
+      required: [Nm, Desc, Qty, UnitCost, SalesAmt, RegDscntAmt, SpeDscntAmt, NetSales]
+      properties:
+        Nm: { type: string, maxLength: 100 }
+        Desc: { type: string, maxLength: 100, description: Mandatory from CAS sheet v2.2 }
+        Qty: { type: number, description: 2 decimals allowed (half = 0.50) }
+        Unit: { type: string, maxLength: 50 }
+        UnitCost: { allOf: [{ $ref: "#/components/schemas/Money" }], description: Net of VAT }
+        SalesAmt: { allOf: [{ $ref: "#/components/schemas/Money" }], description: Qty x UnitCost }
+        RegDscntAmt: { allOf: [{ $ref: "#/components/schemas/Money" }], description: Outright discount }
+        SpeDscntAmt: { allOf: [{ $ref: "#/components/schemas/Money" }], description: Conditional discount }
+        NetSales: { allOf: [{ $ref: "#/components/schemas/Money" }], description: "SalesAmt - (RegDscntAmt + SpeDscntAmt); SpeDscntAmt ignored for VATable" }
+    Discount:
+      type: object
+      required: [ScAmt, PwdAmt, RegAmt, SpeAmt]
+      properties:
+        ScAmt: { $ref: "#/components/schemas/Money" }
+        PwdAmt: { $ref: "#/components/schemas/Money" }
+        RegAmt: { $ref: "#/components/schemas/Money" }
+        SpeAmt: { $ref: "#/components/schemas/Money" }
+        Rmk2: { type: string, maxLength: 500 }
+    ForCur:
+      type: object
+      required: [Currency, ConvRate, ForexAmt]
+      properties:
+        Currency: { type: string, minLength: 3, maxLength: 3, example: USD }
+        ConvRate: { type: number }
+        ForexAmt: { type: number }
+    PosInvoice:
+      type: object
+      description: e-invoice JSON for CRM/POS (sheet v2.1). No ItemList; BuyerInfo optional.
+      required: [CompInvoiceId, IssueDtm, EisUniqueId, DocType, CorrYN, SellerInfo, VATSales, OtherTaxRev, ExemptSales,
+        ZeroSales, TotSalesAmt, Discount, TotNetSalesAftDisct, VATAmt, WithholdIncome, WithholdBusVAT, WithholdBusPT,
+        OtherNonTaxCharge, NetAmtPay, PtuNum, Min, Msn]
+      properties:
+        CompInvoiceId: { type: string, maxLength: 50 }
+        IssueDtm: { type: string }
+        EisUniqueId: { type: string, maxLength: 24 }
+        DocType: { type: string, enum: ["01", "06"], description: "01 Invoice, 06 Adjustment document" }
+        CorrYN: { type: string, enum: ["Y", "N"] }
+        CorrectionCd: { type: string }
+        PrevUniqueId: { type: string, maxLength: 24 }
+        Rmk1: { type: string, maxLength: 500 }
+        SellerInfo: { $ref: "#/components/schemas/SellerInfo" }
+        BuyerInfo: { $ref: "#/components/schemas/BuyerInfo" }
+        VATSales: { $ref: "#/components/schemas/Money" }
+        OtherTaxRev: { $ref: "#/components/schemas/Money" }
+        ExemptSales: { $ref: "#/components/schemas/Money" }
+        ZeroSales: { $ref: "#/components/schemas/Money" }
+        TotSalesAmt: { $ref: "#/components/schemas/Money" }
+        Discount: { $ref: "#/components/schemas/Discount" }
+        TotNetSalesAftDisct: { $ref: "#/components/schemas/Money" }
+        VATAmt: { $ref: "#/components/schemas/Money" }
+        WithholdIncome: { $ref: "#/components/schemas/Money" }
+        WithholdBusVAT: { $ref: "#/components/schemas/Money" }
+        WithholdBusPT: { $ref: "#/components/schemas/Money" }
+        OtherNonTaxCharge: { $ref: "#/components/schemas/Money" }
+        NetAmtPay: { $ref: "#/components/schemas/Money" }
+        PtuNum: { type: string, maxLength: 50 }
+        Min: { type: string, maxLength: 50, description: Machine Identification Number }
+        Msn: { type: string, maxLength: 50, description: Machine Serial Number }
