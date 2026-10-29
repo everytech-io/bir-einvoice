@@ -2,17 +2,17 @@ package io.everytech.bireinvoice.mock
 
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import io.everytech.bireinvoice.CasValidator
 import io.everytech.bireinvoice.EisCredentials
 import io.everytech.bireinvoice.EisCrypto
+import io.everytech.bireinvoice.EisException
+import io.everytech.bireinvoice.InquiryResult
+import io.everytech.bireinvoice.ProcessedDocument
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import java.net.InetSocketAddress
 import java.net.URLDecoder
@@ -35,7 +35,8 @@ import kotlin.math.abs
  * duplicate IDs) so a client can be tested before anyone has sandbox credentials. Passing here is
  * necessary, not sufficient: the real sandbox has the final word.
  *
- * The keys and credentials are generated per instance and exist only in memory.
+ * The keys and credentials are generated per instance and exist only in memory. The processing
+ * behind the transport (registration, results, the checks after the signature) is [MockEis].
  *
  * @param processingPolls how many inquiries answer "in progress" (02) before the result is ready.
  */
@@ -47,17 +48,17 @@ public class MockEisServer @JvmOverloads constructor(
     private val signingKeys: KeyPair = rsaKeyPair()
     private val lock = Any()
     private val sessions = HashMap<String, Session>()
-    private val submissions = HashMap<String, Submission>()
-    private val registeredIds = LinkedHashSet<String>()
     private var server: HttpServer? = null
     private var executor: ExecutorService? = null
     private var baseUrl: String = ""
 
+    private val eis = MockEis(processingPolls = processingPolls, nowMillis = clock::millis)
+
     private val baseCredentials = EisCredentials(
-        eisCertNumber = "20" + randomString(6, UPPER_DIGITS),
+        eisCertNumber = eis.eisCertNumber,
         applicationId = randomString(8, UPPER_DIGITS),
         applicationKey = randomString(12, UPPER_DIGITS),
-        userId = "mockuser",
+        userId = eis.userId,
         password = randomString(16, KEY_CHARS),
         eisPublicKey = Base64.getEncoder().encodeToString(eisKeys.public.encoded),
         signingKeyId = "Akeypair00",
@@ -71,7 +72,7 @@ public class MockEisServer @JvmOverloads constructor(
 
     /** EisUniqueIds accepted so far. */
     public val registered: Set<String>
-        get() = synchronized(lock) { registeredIds.toSet() }
+        get() = synchronized(lock) { eis.registered }
 
     /** Starts listening on 127.0.0.1 and returns the base URL, like `http://127.0.0.1:41234`. */
     @JvmOverloads
@@ -98,10 +99,6 @@ public class MockEisServer @JvmOverloads constructor(
     }
 
     private class Session(val sessionKey: String, val expiresAt: Long)
-
-    private class Submission(val ackId: String, val documents: List<Document>, var pollsLeft: Int)
-
-    private class Document(val invoiceUid: String, val resultStatusCode: String, val description: String? = null)
 
     private class Reply(val status: Int, val body: JsonObject)
 
@@ -205,96 +202,57 @@ public class MockEisServer @JvmOverloads constructor(
         val (s, error) = session(exchange, "/api/invoices")
         if (s == null) return error!!
         val request = parseJsonObject(body) ?: return fail("E11", "Invalid Request Body JSON")
-        val submitId = request.string("submitId")
-        if (submitId == null || !submitId.startsWith("${baseCredentials.eisCertNumber}-") || !SUBMIT_SUFFIX.containsMatchIn(submitId)) {
-            return fail("E11", "Invalid submitId")
+        val submitId = request.string("submitId") ?: return fail("E11", "Invalid submitId")
+        try {
+            eis.checkSubmitId(submitId)
+        } catch (e: EisException) {
+            return fail(e.code, e.message.orEmpty().substringAfter(": "))
         }
-        if (submitId in submissions) return fail("E14", "Duplicated submitId")
         val plain = try {
             EisCrypto.aesDecrypt(s.sessionKey, request.string("data")!!)
         } catch (e: Exception) {
             return fail("E21", "It could not decrypt the \"data\" field")
         }
         val jwsList = plain.split(",")
-        if (jwsList.size > 100) return fail("E11", "1 to 100 invoices per submission")
-        val documents = jwsList.map { check(it) }
-        val now = Instant.ofEpochMilli(clock.millis())
-        val ackId = "BIR-${EisCrypto.manilaDatetime(now)}-${randomString(5, UPPER_DIGITS)}"
-        submissions[submitId] = Submission(ackId, documents, processingPolls)
-        val ack = buildJsonObject {
+        val ack = try {
+            eis.accept(submitId, jwsList.size) { jwsList.map { check(it) } }
+        } catch (e: EisException) {
+            return fail(e.code, e.message.orEmpty().substringAfter(": "))
+        }
+        val result = buildJsonObject {
             put("accreditationId", baseCredentials.eisCertNumber)
             put("userId", baseCredentials.userId)
-            put("refSubmitId", submitId)
-            put("ackId", ackId)
-            put("responseDtm", MANILA_ISO.format(now))
-            put(
-                "description",
-                "Transmission has been successfully processed. EIS will process the final registration within the next business day.",
-            )
+            put("refSubmitId", ack.submitId)
+            put("ackId", ack.ackId)
+            put("responseDtm", ack.responseDtm)
+            put("description", ack.description)
         }
-        return ok(EisCrypto.aesEncrypt(s.sessionKey, ack.toString()))
+        return ok(EisCrypto.aesEncrypt(s.sessionKey, result.toString()))
     }
 
-    private fun check(jws: String): Document {
+    // The signature layer; everything after it is MockEis.check.
+    private fun check(jws: String): ProcessedDocument {
         val verified = EisCrypto.jwsVerify(jws, signingKeys.public)
         val payloadText = verified.payload ?: "{}"
         val payload = try {
             Json.parseToJsonElement(payloadText)
         } catch (e: Exception) {
-            return Document("", "SYN004", "payload is not JSON")
+            return ProcessedDocument("", "SYN004", "payload is not JSON")
         }
         val uid = (payload as? JsonObject)?.string("EisUniqueId") ?: ""
-        if (!verified.ok || verified.kid != baseCredentials.signingKeyId) return Document(uid, "SYN002", "Invalid signature")
-        val problems = CasValidator.validate(payload)
-        if (problems.isNotEmpty()) {
-            val first = problems.first()
-            return Document(uid, first.code, "${first.field}: ${first.message}")
-        }
-        if (uid.substring(8, 16) != baseCredentials.eisCertNumber) return Document(uid, "ERR006", "EIS Cert Number mismatch")
-        val p = payload as JsonObject
-        val prev = p.string("PrevUniqueId") ?: ""
-        if (p.string("CorrYN") == "Y" && !ZEROS_24.matches(prev) && prev !in registeredIds) {
-            return Document(uid, "ERR007", "PrevUniqueId is not registered")
-        }
-        if (uid in registeredIds) return Document(uid, "SYN003", "Duplicated EisUniqueId")
-        registeredIds += uid
-        return Document(uid, "SUC001")
+        if (!verified.ok || verified.kid != baseCredentials.signingKeyId) return ProcessedDocument(uid, "SYN002", "Invalid signature")
+        return eis.check(payloadText, uid)
     }
 
     private fun inquire(exchange: HttpExchange, submitId: String, path: String): Reply {
         val (s, error) = session(exchange, path)
         if (s == null) return error!!
-        val submission = submissions[submitId] ?: return fail("E15", "Invalid submitId")
-        val now = Instant.ofEpochMilli(clock.millis())
-        val data = buildJsonObject {
-            put("accreditationId", baseCredentials.eisCertNumber)
-            put("userId", baseCredentials.userId)
-            put("refSubmitId", submitId)
-            put("ackId", submission.ackId)
-            put("responseDtm", MANILA_ISO.format(now))
-            if (submission.pollsLeft > 0) {
-                submission.pollsLeft -= 1
-                put("processStatusCode", "02")
-            } else {
-                val success = submission.documents.count { it.resultStatusCode == "SUC001" }
-                put("processStatusCode", "01")
-                put("totalCountQuantity", submission.documents.size)
-                put("successCountQuantity", success)
-                put("failCountQuantity", submission.documents.size - success)
-                putJsonArray("processedDocuments") {
-                    submission.documents.forEach { d ->
-                        add(
-                            buildJsonObject {
-                                put("invoiceUid", d.invoiceUid)
-                                put("resultStatusCode", d.resultStatusCode)
-                                if (d.description != null) put("description", d.description)
-                            },
-                        )
-                    }
-                }
-            }
+        val result = try {
+            eis.inquire(submitId)
+        } catch (e: EisException) {
+            return fail(e.code, e.message.orEmpty().substringAfter(": "))
         }
-        return ok(data)
+        return ok(inquiryJson.encodeToJsonElement(InquiryResult.serializer(), result))
     }
 
     private companion object {
@@ -303,8 +261,7 @@ public class MockEisServer @JvmOverloads constructor(
         const val SKEW_MINUTES = 15
         val STATUS_FOR = mapOf("E01" to 404, "E02" to 404, "E03" to 401, "E04" to 401, "E15" to 404)
         val INQUIRY_PATH = Regex("/api/invoice_result/([^/]+)")
-        val SUBMIT_SUFFIX = Regex("-\\d{8}-[0-9a-f]{12}$")
-        val ZEROS_24 = Regex("0{24}")
+        val inquiryJson = Json { explicitNulls = false }
         val MANILA: ZoneOffset = ZoneOffset.ofHours(8)
         val MANILA_ISO: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").withZone(MANILA)
         val DATETIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")

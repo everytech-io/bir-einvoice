@@ -13,7 +13,8 @@ before you have sandbox credentials.
 > The BIR's own documents are the authority. A payload that passes the mock or the validator
 > here can still be rejected by the BIR sandbox, and the sandbox has the final word.
 
-Status: 0.1.0. JVM target (JDK 21). The source sets are laid out so Android and iOS targets can
+Status: 0.1.0. JVM target (JDK 21), plus Kotlin/Wasm for the parts that run in a browser (see
+Platforms). The source sets are laid out so Android and iOS targets can
 be added later. The crypto follows BIR's Java, Python and C# samples. The client and the mock
 have been tested in both directions against a separate Node.js implementation of the same
 protocol. Nobody has run this library against the live BIR sandbox yet.
@@ -23,10 +24,25 @@ protocol. Nobody has run this library against the live BIR sandbox yet.
 | Module | Coordinates | Contents |
 |---|---|---|
 | `bir-einvoice` | `io.everytech:bir-einvoice:0.1.0` | `CasInvoice` model, `Amount`, `EisJson`, `CasValidator`, `EisCodes`, `EisCrypto`, `EisIds`, `EisClient` |
-| `bir-einvoice-mock` | `io.everytech:bir-einvoice-mock:0.1.0` | `MockEisServer` for tests, plus a standalone runner |
+| `bir-einvoice-mock` | `io.everytech:bir-einvoice-mock:0.1.0` | `MockEisServer` for tests, plus a standalone runner; `MockEis`, the same processing without the HTTP and crypto layers |
 
 Dependencies: the Kotlin standard library and kotlinx-serialization-json. HTTP uses the JDK's
 `java.net.http.HttpClient`; the mock uses the JDK's built-in `com.sun.net.httpserver`.
+
+### Platforms
+
+| | JVM | Kotlin/Wasm (`wasmJs`, browsers) |
+|---|---|---|
+| `CasInvoice`, `Amount`, `EisJson`, `CasValidator`, `EisCodes`, `EisIds` | yes | yes |
+| `EisCrypto`, `EisClient`, `JdkEisTransport` | yes | no |
+| `MockEis` (in-process registration, results and checks) | yes | yes |
+| `MockEisServer`, the standalone runner | yes | no |
+
+The transport stays on the JVM on purpose: a browser cannot call the EIS (no CORS, and the EIS
+expects a fixed, registered IP address), and the signing key should not live in a web page.
+In a browser, `MockEis` gives a practice run that never leaves the page. `EisIds` uses
+`SecureRandom` on the JVM and `crypto.getRandomValues` in a browser. The common tests run on
+both (`./gradlew check` runs the Wasm ones on Node.js, which Gradle downloads).
 
 ## Install
 
