@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 JE Ramos (EveryTech)"
+SPDX-License-Identifier = "Apache-2.0"

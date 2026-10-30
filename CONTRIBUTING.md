@@ -248,3 +248,8 @@ reference.
 By contributing you license your work under the [Apache License 2.0](LICENSE). Do not copy code
 you are not allowed to relicense, and do not paste text from BIR documents or sample code beyond
 a short quotation that you cite. See [TRADEMARKS.md](TRADEMARKS.md) for the use of names and logos.
+
+The repository follows the [REUSE](https://reuse.software) specification. [REUSE.toml](REUSE.toml)
+declares the copyright and license of every file, and the license text is in
+[LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt). You do not need to add headers to new files.
+Check with `reuse lint` if you have the [REUSE tool](https://github.com/fsfe/reuse-tool).
