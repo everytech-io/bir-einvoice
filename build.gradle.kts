@@ -46,6 +46,18 @@ subprojects {
     }
 }
 
+// Every jar (classes, sources, klib and metadata jars) carries the license and the notice, as
+// Apache-2.0 section 4 asks of anyone who redistributes the code.
+subprojects {
+    // org.gradle.jvm.tasks.Jar is the base type: the Kotlin sources jars are of that type, and the
+    // plain `Jar` in a build script (org.gradle.api.tasks.bundling.Jar) would miss them.
+    tasks.withType<org.gradle.jvm.tasks.Jar>().configureEach {
+        metaInf {
+            from(rootProject.file("LICENSE"), rootProject.file("NOTICE"))
+        }
+    }
+}
+
 // Kotlin 2.1's Wasm linker cannot run inside the Gradle daemon (it loses its runtime resources
 // and fails with an NPE in writeCompilationResult), so only the link step runs out of process.
 subprojects {
