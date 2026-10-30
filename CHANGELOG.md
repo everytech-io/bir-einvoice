@@ -30,10 +30,24 @@ Version 0.1.0 is in preparation and has not been tagged.
 - Open-source project files: contributing guide, code of conduct, governance, support, trademark
   policy, NOTICE, code owners, pull request template, `.editorconfig`, Dependabot configuration
   and a DCO check.
+- `EisUrls.checkBaseUrl(baseUrl)`, which returns why a URL cannot be the EIS base URL, or null.
+- Every jar (classes, sources, metadata and Wasm klib) carries `META-INF/LICENSE` and
+  `META-INF/NOTICE`.
+- REUSE compliance: `REUSE.toml` and `LICENSES/Apache-2.0.txt`.
 
 ### Changed
 
 - `Amount` is a plain data class, so Java can construct `CasInvoice`.
 - `bir-einvoice-mock` is a Kotlin Multiplatform module (JVM and Wasm).
+- NOTICE and the POM name JE Ramos (EveryTech) as the copyright holder and developer.
+
+### Security
+
+- `EisClient` refuses a base URL that does not start with `https://` and throws
+  `IllegalArgumentException`. Plain `http://` is accepted only for `localhost`, `127.0.0.1` and
+  `[::1]`, for a test server such as `MockEisServer`.
+- `MockEisServer` compares the HMAC and the portal password in constant time.
+- CI pins every GitHub Action to a commit SHA, validates the Gradle wrapper, and the wrapper checks
+  the SHA-256 of the Gradle distribution.
 
 [Unreleased]: https://github.com/everytech-io/bir-einvoice/commits/main
