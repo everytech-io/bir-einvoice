@@ -354,7 +354,7 @@ is maintained by one person, JE Ramos, who does business as EveryTech.
 * [SUPPORT.md](SUPPORT.md): where to ask questions
 * [GOVERNANCE.md](GOVERNANCE.md): maintainers and how decisions are made
 * [CHANGELOG.md](CHANGELOG.md): what changed in each version
-* [TRADEMARKS.md](TRADEMARKS.md): use of the EveryTech names and logos
+* [TRADEMARKS.md](TRADEMARKS.md): use of the EveryTech name and logo
 
 bir-einvoice is independent open-source software. It is not affiliated with or endorsed by the
 Bureau of Internal Revenue.
