@@ -339,8 +339,10 @@ code snippet. A snippet that fails against `MockEisServer` is the quickest to fi
 
 Issues are public. Leave out TINs, customer details, real invoices, EIS credentials, keys and
 tokens; use made-up values. Security problems never go in a public issue: see
-[SECURITY.md](SECURITY.md). Problems in the EveryInvoice desktop app belong in
-[everytech-io/everyinvoice](https://github.com/everytech-io/everyinvoice/issues).
+[SECURITY.md](SECURITY.md).
+
+Problems in EveryInvoice, a free e-invoicing app by EveryTech built on this library
+(https://everyinvoice.everytech.io), do not go here: email contact@everytech.io.
 
 ## Building
 

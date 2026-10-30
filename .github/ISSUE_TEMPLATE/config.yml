@@ -3,6 +3,6 @@ contact_links:
   - name: Report a security problem
     url: https://github.com/everytech-io/bir-einvoice/security/policy
     about: Report vulnerabilities privately with Report a vulnerability. Never in a public issue.
-  - name: EveryInvoice desktop app
-    url: https://github.com/everytech-io/everyinvoice/issues
-    about: Problems in the EveryInvoice app go to its own repository.
+  - name: EveryInvoice app
+    url: https://everyinvoice.everytech.io
+    about: EveryInvoice is a free e-invoicing app by EveryTech built on this library. Email problems in the app to contact@everytech.io.

@@ -37,6 +37,12 @@ made-up values.
   a BIR decision belong with the BIR. This project is not affiliated with or endorsed by the BIR.
 * **Your computer, network or accounts.**
 
+## The EveryInvoice app
+
+EveryInvoice, a free e-invoicing app by EveryTech built on this library:
+https://everyinvoice.everytech.io. Questions and bug reports about the app go to
+contact@everytech.io, not to this repository's issues.
+
 ## Other contact
 
 For anything that does not belong in a public thread, write to contact@everytech.io. Use that

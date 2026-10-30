@@ -65,8 +65,9 @@ receives your invoices, credentials or keys through this library.
 * Weaknesses BIR's protocol itself requires, such as the AES IV derived from the key (see the
   README). Report those to the BIR.
 * The BIR's own systems (EIS, the EIS Certification Portal). Report those to the BIR.
-* The EveryInvoice app: report those at
-  [everytech-io/everyinvoice](https://github.com/everytech-io/everyinvoice/security).
+* EveryInvoice, a free e-invoicing app by EveryTech built on this library
+  (https://everyinvoice.everytech.io): email security problems in the app to
+  contact@everytech.io.
 * How an application that uses this library stores its credentials or keys.
 * Denial of service by flooding the mock, which is a test tool and not meant to face a network.
 * Reports from automated scanners without a demonstrated impact.
