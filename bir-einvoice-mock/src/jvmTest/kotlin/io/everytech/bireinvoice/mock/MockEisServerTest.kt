@@ -188,4 +188,25 @@ class MockEisServerTest {
         assertEquals(404, noHeaders.status)
         assertTrue(""""errorCode":"E01"""" in noHeaders.body, noHeaders.body)
     }
+
+    @Test
+    fun rejectsAMissingTruncatedOrAlteredHmac() {
+        val mock = server()
+        val creds = mock.credentials
+        val transport = JdkEisTransport()
+        val datetime = EisCrypto.manilaDatetime(Instant.now())
+        val good = EisCrypto.hmacAuthorization(creds.applicationKey, datetime, "POST", "/api/authentication")
+        val altered = good.dropLast(2) + (if (good.endsWith("A=")) "B=" else "A=")
+        for (authorization in listOf(null, "", good.dropLast(1), altered)) {
+            val headers = mutableMapOf(
+                "accreditationId" to creds.eisCertNumber,
+                "applicationId" to creds.applicationId,
+                "datetime" to datetime,
+            )
+            if (authorization != null) headers["authorization"] = authorization
+            val response = transport.execute("POST", "${creds.baseUrl}/api/authentication", headers, "{}")
+            assertEquals(401, response.status, "authorization=$authorization")
+            assertTrue(""""errorCode":"E04"""" in response.body, response.body)
+        }
+    }
 }

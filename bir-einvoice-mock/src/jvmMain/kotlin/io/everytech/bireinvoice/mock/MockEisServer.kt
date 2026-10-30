@@ -18,6 +18,7 @@ import java.net.InetSocketAddress
 import java.net.URLDecoder
 import java.security.KeyPair
 import java.security.KeyPairGenerator
+import java.security.MessageDigest
 import java.security.SecureRandom
 import java.time.Clock
 import java.time.Instant
@@ -150,7 +151,7 @@ public class MockEisServer @JvmOverloads constructor(
         val at = parseManila(datetime)
         if (at == null || abs(at - clock.millis()) > SKEW_MINUTES * 60_000) return fail("E05", "Invalid Datetime")
         val expected = EisCrypto.hmacAuthorization(hmacKey, datetime!!, exchange.requestMethod, path)
-        if (header(exchange, "authorization") != expected) return fail("E04", "Invalid HMAC Signature")
+        if (!constantTimeEquals(header(exchange, "authorization"), expected)) return fail("E04", "Invalid HMAC Signature")
         return null
     }
 
@@ -172,7 +173,7 @@ public class MockEisServer @JvmOverloads constructor(
         }
         val creds = parseJsonObject(plain) ?: return fail("E22", "Invalid JSON data in the \"data\" field")
         val userId = creds.string("userId")
-        if (userId != baseCredentials.userId || creds.string("password") != baseCredentials.password) {
+        if (userId != baseCredentials.userId || !constantTimeEquals(creds.string("password"), baseCredentials.password)) {
             return fail("E23", "Invalid User ID or Password")
         }
         val authKey = creds.string("authKey")
@@ -269,6 +270,11 @@ public class MockEisServer @JvmOverloads constructor(
 
         fun randomString(length: Int, alphabet: String): String =
             buildString { repeat(length) { append(alphabet[random.nextInt(alphabet.length)]) } }
+
+        // For secrets (the HMAC, the password). MessageDigest.isEqual takes the same time wherever
+        // the first difference is, so response times do not reveal the expected value byte by byte.
+        fun constantTimeEquals(actual: String?, expected: String): Boolean =
+            actual != null && MessageDigest.isEqual(actual.toByteArray(Charsets.UTF_8), expected.toByteArray(Charsets.UTF_8))
 
         fun rsaKeyPair(): KeyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
 
