@@ -1,5 +1,10 @@
 # bir-einvoice
 
+[![CI](https://github.com/everytech-io/bir-einvoice/actions/workflows/ci.yml/badge.svg)](https://github.com/everytech-io/bir-einvoice/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Conventional Commits](https://img.shields.io/badge/commits-conventional-fe5196.svg)](https://www.conventionalcommits.org)
+[![DCO](https://img.shields.io/badge/DCO-signed--off-green.svg)](CONTRIBUTING.md#sign-off-your-commits-developer-certificate-of-origin)
+
 A Kotlin Multiplatform client library for the e-invoice API of the Philippine Bureau of Internal
 Revenue's Electronic Invoicing System (EIS). It covers the three calls a seller's system makes
 (authentication, invoice issuance, result inquiry), the CAS e-invoice JSON model, a validator
@@ -16,8 +21,9 @@ before you have sandbox credentials.
 Status: 0.1.0. JVM target (JDK 21), plus Kotlin/Wasm for the parts that run in a browser (see
 Platforms). The source sets are laid out so Android and iOS targets can
 be added later. The crypto follows BIR's Java, Python and C# samples. The client and the mock
-have been tested in both directions against a separate Node.js implementation of the same
-protocol. Nobody has run this library against the live BIR sandbox yet.
+have been tested in both directions against an independent Node.js implementation of the same
+protocol. That implementation is not part of this repository, so you cannot repeat that test unless
+you have your own. Nobody has run this library against the live BIR sandbox yet.
 
 ## What is in it
 
@@ -330,12 +336,29 @@ tokens; use made-up values. Security problems never go in a public issue: see
 ./gradlew publishToMavenLocal    # io.everytech:bir-einvoice:0.1.0 and bir-einvoice-mock:0.1.0
 ```
 
-Two interop tests run only when asked. They check this library against EveryTech's separate
-Node.js implementation of the same protocol:
+Two interop tests run only when asked. They check this library against an independent
+Node.js implementation of the same protocol that is not in this repository (you need your own):
 
 * `BIR_EINVOICE_NODE_MOCK_CREDS=<credentials.json>`: the Kotlin client against a running Node mock.
 * `BIR_EINVOICE_NODE_DIR=<folder with src/eis/client.mjs>`: the Node client against `MockEisServer`.
 
+## Contributing and community
+
+Contributions are welcome: bug reports, tests, documentation, and fixes that follow the BIR's
+published specifications. Every rule in the code must cite its official BIR source.
+
+* [CONTRIBUTING.md](CONTRIBUTING.md): scope, setup, tests, commit style and the DCO sign-off
+* [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): Contributor Covenant 2.1
+* [SECURITY.md](SECURITY.md): report vulnerabilities privately
+* [SUPPORT.md](SUPPORT.md): where to ask questions
+* [GOVERNANCE.md](GOVERNANCE.md): maintainers and how decisions are made
+* [CHANGELOG.md](CHANGELOG.md): what changed in each version
+* [TRADEMARKS.md](TRADEMARKS.md): use of the EveryTech names and logos
+
+bir-einvoice is independent open-source software. It is not affiliated with or endorsed by the
+Bureau of Internal Revenue.
+
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
+Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). "EveryTech" is a name and mark of
+EveryTech; the license does not grant rights to it (see [TRADEMARKS.md](TRADEMARKS.md)).
