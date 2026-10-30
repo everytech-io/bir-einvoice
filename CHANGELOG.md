@@ -40,6 +40,13 @@ Version 0.1.0 is in preparation and has not been tagged.
 - `Amount` is a plain data class, so Java can construct `CasInvoice`.
 - `bir-einvoice-mock` is a Kotlin Multiplatform module (JVM and Wasm).
 - NOTICE and the POM name JE Ramos (EveryTech) as the copyright holder and developer.
+- Documentation no longer links to the EveryInvoice app's repository, which is private. The README,
+  CONTRIBUTING, SECURITY, SUPPORT and the issue-form links describe EveryInvoice as a free
+  e-invoicing app by EveryTech built on this library (https://everyinvoice.everytech.io) and send
+  problems with the app to contact@everytech.io. The library stays Apache-2.0 and open source.
+- TRADEMARKS.md says that EveryInvoice and EveryTech are trademarks of JE Ramos (EveryTech), that
+  the Apache License 2.0 grants no trademark rights (section 6), and that forks must not use those
+  names to imply endorsement.
 
 ### Security
 
