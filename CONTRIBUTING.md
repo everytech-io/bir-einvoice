@@ -141,8 +141,8 @@ This library is only useful if it matches what the BIR publishes. So:
 
 When the BIR publishes a new version of a guide or a circular:
 
-1. Anyone opens an issue with the `bir-spec` label. Name the document, the old and the new
-   version, and link it.
+1. Anyone opens an issue. Name the document, the old and the new version, and link it. The
+   maintainer labels it `bir-spec`, the label used for changes that follow a BIR specification.
 2. The issue lists each changed rule, with the BIR section, and the code, tests and docs it
    affects.
 3. Each change goes in as a pull request that cites that section.
@@ -192,7 +192,19 @@ git rebase --signoff origin/main         # every commit on your branch
 git push --force-with-lease
 ```
 
-A check named `dco` runs on every pull request and fails if a commit has no sign-off.
+A check named `dco` runs on every pull request and fails if a commit has no sign-off with the
+commit author's email address. The first commits in this repository predate the DCO requirement
+and are not signed off.
+
+## AI-assisted development
+
+Some commits in this repository are co-authored with an AI coding assistant. They carry a
+`Co-Authored-By` trailer that names it. The maintainer reviews every change before it is merged
+and is responsible for it.
+
+You may use AI tools too. You must understand, test and sign off every change you submit, as if
+you had written it alone. The DCO sign-off applies the same way: by signing off, you certify that
+you have the right to submit the change under the project's license.
 
 ## Pull requests and review
 
