@@ -18,9 +18,10 @@ before you have sandbox credentials.
 > Revenue. The BIR's own documents are the authority. A payload that passes the mock or the
 > validator here can still be rejected by the BIR sandbox, and the sandbox has the final word.
 
-Status: 0.1.0. JVM target (JDK 21), plus Kotlin/Wasm for the parts that run in a browser (see
-Platforms). The source sets are laid out so Android and iOS targets can
-be added later. The crypto follows BIR's Java, Python and C# samples. The client and the mock
+Status: 0.1.0, in preparation. No version has been released or tagged yet, so for now you build
+it from source (see Install). JVM target (JDK 21), plus Kotlin/Wasm for the parts that run in a
+browser (see Platforms). The source sets are laid out so Android and iOS targets can be added
+later. The crypto follows BIR's Java, Python and C# samples. The client and the mock
 have been tested in both directions against an independent implementation of the same protocol,
 which is not published. Nobody has run this library against the live BIR sandbox yet.
 
@@ -51,6 +52,9 @@ both (`./gradlew check` runs the Wasm ones on Node.js, which Gradle downloads).
 
 ## Install
 
+The library is not on Maven Central. Until v0.1.0 is tagged, build it from source with one of the
+first two routes below.
+
 ### Gradle composite build (works today)
 
 Clone this repository next to your project and include it. Gradle swaps the coordinates for the
@@ -67,9 +71,15 @@ dependencies {
 }
 ```
 
-Or run `./gradlew publishToMavenLocal` here and add `mavenLocal()` to your repositories.
+### Local Maven repository (works today)
 
-### JitPack (once a release is tagged)
+Run `./gradlew publishToMavenLocal` in this repository, add `mavenLocal()` to your repositories,
+and use the same `io.everytech` coordinates as above.
+
+### JitPack (once v0.1.0 is tagged)
+
+No tag exists yet, so this does not work today. Once a release such as `v0.1.0` is tagged, JitPack
+builds it on the first request (see [jitpack.yml](jitpack.yml)):
 
 ```kotlin
 repositories {
