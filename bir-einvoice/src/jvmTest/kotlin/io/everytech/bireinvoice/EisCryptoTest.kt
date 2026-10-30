@@ -72,6 +72,10 @@ class EisCryptoTest {
 
     @Test
     fun readsTheBirSandboxPublicKey() {
+        // The EIS Certification Public Key (X.509 SPKI, base64) from the EIS Certification Portal,
+        // Downloads page (https://eis-cert.bir.gov.ph/#/downloads, item 16 "EIS Certification
+        // Public Key"). Added to this repository on 29 October 2026 (commit 73f5507); the history
+        // does not record when it was downloaded. Re-check it against the portal before relying on it.
         val bir = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgMbSxoPRLi4P98qbfdFvwYCEf6l2QcKHhyE+m7Fh8OSqKqQFWud0+SSqydzYZzQYZIQ0hwZ/" +
             "Vvd6StsEY80O7XC6ELVZ052s91PjAlh38TSzmJGy8ZZUYLsg8S2DzKaCpQ0ZmvphYf0ZB8ZoOXBTVPpg4cGBVbMZLdTtnXYxSegXhog6XBsIkAXmAWHwzJ0t6x0" +
             "NbMnsfbHvFlqtUrsbwBc4BD+0rO3lJHPbDO4HEiMmrlM/bD/hL4uKzXv3jeXCkDbQdYsZZgI7tglu2Al/jB8VdMDJRJjsQf0Z5Ye3FdOsqp1v3SF3ENns8F/0A8x" +
