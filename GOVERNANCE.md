@@ -80,13 +80,17 @@ by asking.
 ## Removing a maintainer
 
 A maintainer who breaks the Code of Conduct, or repeatedly acts against the rules above, can be
-removed by the other maintainers. While there is a single maintainer, no one else can make that
-decision. Conduct reports about the maintainer still go to contact@everytech.io.
+removed by the other maintainers. While there is a single maintainer, no one inside the project
+can decide that independently.
 
 ## Code of Conduct enforcement
 
 Reports go to contact@everytech.io, as described in the [Code of Conduct](CODE_OF_CONDUCT.md).
-Where a report is about a maintainer, that maintainer takes no part in handling it.
+Where a report is about a maintainer, that maintainer takes no part in handling it. That address
+reaches the lead maintainer, so while he is the only maintainer, report conduct problems about him
+to GitHub instead, with its
+[report abuse](https://docs.github.com/en/communities/maintaining-your-safety-on-github/reporting-abuse-or-spam)
+feature.
 
 ## Changing this document
 
