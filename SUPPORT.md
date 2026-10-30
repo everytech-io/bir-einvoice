@@ -1,7 +1,7 @@
 # Getting help
 
-bir-einvoice is free, open-source software maintained by a small team. There is no service-level
-agreement and no paid support. These are the places to ask, in the order that usually works best.
+bir-einvoice is free, open-source software maintained by one person, JE Ramos (EveryTech), in
+their own time. There is no service-level agreement and no paid support. These are the places to ask, in the order that usually works best.
 
 ## Questions and ideas
 

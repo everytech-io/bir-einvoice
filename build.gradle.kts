@@ -30,8 +30,8 @@ subprojects {
                     }
                     developers {
                         developer {
-                            id.set("everytech")
-                            name.set("EveryTech")
+                            id.set("JE-Ramos")
+                            name.set("JE Ramos (EveryTech)")
                             url.set("https://everytech.io")
                         }
                     }

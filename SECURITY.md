@@ -31,7 +31,7 @@ keys or tokens, even privately.
 | We share a plan, or a fix for you to test | within 30 days for a confirmed problem |
 | We publish the fix and an advisory | within 90 days of the report, sooner when we can |
 
-These are targets from a small team, not guarantees. If a fix needs longer, for example because
+These are targets from a single maintainer, not guarantees. If a fix needs longer, for example because
 it depends on the BIR, we say so in the thread and agree a date with you. We ask you not to
 disclose the problem publicly until the fix is released or the 90 days have passed, whichever
 comes first. We will not take legal action against anyone who reports in good faith, follows this

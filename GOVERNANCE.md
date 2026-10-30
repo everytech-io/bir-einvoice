@@ -18,18 +18,19 @@ Current maintainers:
 
 | Name | GitHub | Affiliation |
 |---|---|---|
-| JE Ramos | [@JE-Ramos](https://github.com/JE-Ramos) | EveryTech (lead maintainer) |
+| JE Ramos | [@JE-Ramos](https://github.com/JE-Ramos) | Lead maintainer; does business as EveryTech |
 
 The project has one maintainer today. That is a risk we want to reduce; see "Becoming a
 maintainer".
 
 ## EveryTech's role
 
-EveryTech is the company that started the project, publishes the releases and holds the
-trademarks (see [TRADEMARKS.md](TRADEMARKS.md)). It owns the GitHub organization that hosts this
-repository. In practice:
+EveryTech is the trade name of JE Ramos, a freelance developer, who started the project,
+publishes the releases and holds the EveryTech name and logo (see [TRADEMARKS.md](TRADEMARKS.md)).
+EveryTech is not a company. The `everytech-io` GitHub organization that hosts this repository is
+EveryTech's. In practice:
 
-* EveryTech employees can be maintainers, like anyone else, on the merits.
+* Anyone can become a maintainer on the merits, as described in "Becoming a maintainer".
 * EveryTech does not own contributors' copyright. Contributors keep it and license their work
   under Apache-2.0.
 * Roadmap, review and merge decisions are made in the open, in issues and pull requests, under
@@ -79,8 +80,8 @@ by asking.
 ## Removing a maintainer
 
 A maintainer who breaks the Code of Conduct, or repeatedly acts against the rules above, can be
-removed by the other maintainers. With a single maintainer, EveryTech may appoint a reviewer to
-make that decision, and conduct reports about the maintainer go to contact@everytech.io.
+removed by the other maintainers. While there is a single maintainer, no one else can make that
+decision. Conduct reports about the maintainer still go to contact@everytech.io.
 
 ## Code of Conduct enforcement
 

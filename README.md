@@ -14,9 +14,9 @@ It also ships `bir-einvoice-mock`, a local stand-in for EIS, so you can test the
 before you have sandbox credentials.
 
 > **Not affiliated with or endorsed by the BIR.** This is independent open-source software by
-> EveryTech. It is not accredited, certified, or endorsed by the Bureau of Internal Revenue.
-> The BIR's own documents are the authority. A payload that passes the mock or the validator
-> here can still be rejected by the BIR sandbox, and the sandbox has the final word.
+> JE Ramos (EveryTech). It is not accredited, certified, or endorsed by the Bureau of Internal
+> Revenue. The BIR's own documents are the authority. A payload that passes the mock or the
+> validator here can still be rejected by the BIR sandbox, and the sandbox has the final word.
 
 Status: 0.1.0. JVM target (JDK 21), plus Kotlin/Wasm for the parts that run in a browser (see
 Platforms). The source sets are laid out so Android and iOS targets can
@@ -313,7 +313,7 @@ Both tables are also in code: `EisCodes.requestErrors` and `EisCodes.resultCodes
   <https://eis-cert.bir.gov.ph/#/downloads>
 
 This repository links to BIR documents and does not redistribute them.
-[docs/EIS-API-SPEC.md](docs/EIS-API-SPEC.md) is EveryTech's own digest of them and
+[docs/EIS-API-SPEC.md](docs/EIS-API-SPEC.md) is this project's own digest of them and
 [docs/eis-api.openapi.yaml](docs/eis-api.openapi.yaml) an OpenAPI description written from the
 guide. When they disagree with BIR's documents, BIR's documents win.
 
@@ -345,7 +345,8 @@ Node.js implementation of the same protocol that is not in this repository (you 
 ## Contributing and community
 
 Contributions are welcome: bug reports, tests, documentation, and fixes that follow the BIR's
-published specifications. Every rule in the code must cite its official BIR source.
+published specifications. Every rule in the code must cite its official BIR source. The project
+is maintained by one person, JE Ramos, who does business as EveryTech.
 
 * [CONTRIBUTING.md](CONTRIBUTING.md): scope, setup, tests, commit style and the DCO sign-off
 * [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): Contributor Covenant 2.1
@@ -360,5 +361,6 @@ Bureau of Internal Revenue.
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). "EveryTech" is a name and mark of
-EveryTech; the license does not grant rights to it (see [TRADEMARKS.md](TRADEMARKS.md)).
+Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). Copyright 2026 JE Ramos
+(EveryTech). "EveryTech" is the trade name JE Ramos uses; the license does not grant rights to it
+(see [TRADEMARKS.md](TRADEMARKS.md)).
