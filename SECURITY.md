@@ -47,7 +47,8 @@ Older releases do not get backports. Please check that the problem still happens
 ## What this library does and does not do
 
 The library has no server and no telemetry. It sends requests only to the `baseUrl` the calling
-application gives it (the BIR's EIS by default) and keeps nothing on disk. EveryTech never
+application gives it (the BIR's EIS by default), over https unless the host is this computer,
+and keeps nothing on disk. EveryTech never
 receives your invoices, credentials or keys through this library.
 
 ## In scope

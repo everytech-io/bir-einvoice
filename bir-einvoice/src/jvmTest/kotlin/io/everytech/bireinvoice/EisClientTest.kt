@@ -225,6 +225,19 @@ class EisClientTest {
     }
 
     @Test
+    fun refusesAPlainHttpBaseUrlExceptOnLoopback() {
+        val fake = FakeEis { _, _ -> error(500, "E99") }
+        val e = assertFailsWith<IllegalArgumentException> { EisClient(credentials.copy(baseUrl = "http://eis.example.test"), fake, clock) }
+        assertTrue(e.message!!.startsWith("The EIS base URL must start with https://"), e.message)
+        assertFailsWith<IllegalArgumentException> { EisClient(credentials.copy(baseUrl = "ftp://127.0.0.1"), fake, clock) }
+        assertFailsWith<IllegalArgumentException> { EisClient(credentials.copy(baseUrl = "https://user:pw@eis.example.test"), fake, clock) }
+        for (url in listOf("http://127.0.0.1:8787", "http://localhost:8787/", "http://[::1]:8787")) {
+            EisClient(credentials.copy(baseUrl = url), fake, clock, sandboxSpacingMillis = 0).authenticate()
+            assertTrue(fake.calls.last().url.startsWith(url.trimEnd('/') + "/api/authentication"), fake.calls.last().url)
+        }
+    }
+
+    @Test
     fun eisCodesCoverTheTables() {
         for (code in listOf("E01", "E03", "E04", "E05", "E08", "E14", "E19", "E21", "E23", "E24", "E31", "E99")) {
             assertNotNull(EisCodes.requestErrors[code], code)

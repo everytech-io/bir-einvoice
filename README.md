@@ -29,7 +29,7 @@ you have your own. Nobody has run this library against the live BIR sandbox yet.
 
 | Module | Coordinates | Contents |
 |---|---|---|
-| `bir-einvoice` | `io.everytech:bir-einvoice:0.1.0` | `CasInvoice` model, `Amount`, `EisJson`, `CasValidator`, `EisCodes`, `EisCrypto`, `EisIds`, `EisClient` |
+| `bir-einvoice` | `io.everytech:bir-einvoice:0.1.0` | `CasInvoice` model, `Amount`, `EisJson`, `CasValidator`, `EisCodes`, `EisUrls`, `EisCrypto`, `EisIds`, `EisClient` |
 | `bir-einvoice-mock` | `io.everytech:bir-einvoice-mock:0.1.0` | `MockEisServer` for tests, plus a standalone runner; `MockEis`, the same processing without the HTTP and crypto layers |
 
 Dependencies: the Kotlin standard library and kotlinx-serialization-json. HTTP uses the JDK's
@@ -39,7 +39,7 @@ Dependencies: the Kotlin standard library and kotlinx-serialization-json. HTTP u
 
 | | JVM | Kotlin/Wasm (`wasmJs`, browsers) |
 |---|---|---|
-| `CasInvoice`, `Amount`, `EisJson`, `CasValidator`, `EisCodes`, `EisIds` | yes | yes |
+| `CasInvoice`, `Amount`, `EisJson`, `CasValidator`, `EisCodes`, `EisUrls`, `EisIds` | yes | yes |
 | `EisCrypto`, `EisClient`, `JdkEisTransport` | yes | no |
 | `MockEis` (in-process registration, results and checks) | yes | yes |
 | `MockEisServer`, the standalone runner | yes | no |
@@ -96,7 +96,11 @@ account of the taxpayer who issues the invoices.
 | `userId`, `password` | Your EIS Certification Portal login. |
 | `eisPublicKey` | The EIS Certification Public Key from the portal's Downloads page, as base64 SPKI or PEM. |
 | `signingKeyId`, `signingPrivateKey` | Your own RSA signing key pair and its key ID. The private key is PKCS#8, base64 DER or PEM. The key ID goes in each invoice's JWS `kid`. |
-| `baseUrl` | Defaults to the sandbox, `https://eis-cert.bir.gov.ph`. Take the production URL from the portal once your PTT is issued. |
+| `baseUrl` | Defaults to the sandbox, `https://eis-cert.bir.gov.ph`. Take the production URL from the portal once your PTT is issued. It must start with `https://`. `http://` is accepted only for a test server on your own computer (`localhost`, `127.0.0.1` or `[::1]`), such as `MockEisServer`. |
+
+`EisClient` throws `IllegalArgumentException` for a base URL that breaks that rule.
+`EisUrls.checkBaseUrl(url)` applies the same rule and returns the reason, or null when the URL is
+fine, so an application can check a URL before it saves it.
 
 Keep these out of source control. `EisCredentials.toString()` never prints a secret, and
 `EisCredentials.toJson()` / `fromJson()` read and write a plain JSON file you can store with

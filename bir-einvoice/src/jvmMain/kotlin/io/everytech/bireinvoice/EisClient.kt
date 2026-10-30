@@ -15,10 +15,13 @@ import java.time.ZoneOffset
  * off any UI thread. One client serialises its own calls, which also keeps it within the
  * sandbox's one-call-per-10-seconds rule (E19).
  *
- * It talks to nobody but [EisCredentials.baseUrl].
+ * It talks to nobody but [EisCredentials.baseUrl]. That URL must use https, except for a test
+ * server on this computer (see [EisUrls.checkBaseUrl]).
  *
  * @param sandboxSpacingMillis minimum gap between calls. Null means 10,500 ms when the base URL
  *   is [EisCodes.SANDBOX_BASE_URL] and 0 otherwise.
+ * @throws IllegalArgumentException when a credential is blank, or the base URL breaks the rule of
+ *   [EisUrls.checkBaseUrl].
  */
 public class EisClient @JvmOverloads constructor(
     private val credentials: EisCredentials,
@@ -34,6 +37,7 @@ public class EisClient @JvmOverloads constructor(
     init {
         val missing = credentials.missingFields()
         require(missing.isEmpty()) { "EIS credentials are missing ${missing.joinToString { "\"$it\"" }}" }
+        EisUrls.checkBaseUrl(credentials.baseUrl)?.let { throw IllegalArgumentException(it) }
     }
 
     /** The session in use, if any. */
