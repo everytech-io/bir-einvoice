@@ -23,4 +23,4 @@
 - [ ] I updated the documentation and the `Unreleased` section of CHANGELOG.md for anything a
       user would notice.
 - [ ] I used made-up values only (no real TINs, customer data, credentials or keys).
-- [ ] I read [CONTRIBUTING.md](../CONTRIBUTING.md).
+- [ ] I read [CONTRIBUTING.md](https://github.com/everytech-io/bir-einvoice/blob/main/CONTRIBUTING.md).
