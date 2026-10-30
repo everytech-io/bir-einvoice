@@ -39,7 +39,7 @@ production portal: <https://eis.bir.gov.ph/#/support/faq?tabType=ISSUANCE>.
 | New `TransClass` `04`: local sales of Registered Business Enterprises (RBE). New seller `Type` `2`: RBE. | Not in v0.1. This tool targets regular VAT sellers (`Type` `0`). |
 | `BusinessNm` now optional; item `Desc` now mandatory. | We always send both. `Desc` falls back to the item name. |
 | New errors E17, E18, E19, E31 and ERR011 to ERR015. | Mapped in the client and the UI. |
-| Sandbox: **one call per 10 seconds** (E19). | The certification runner waits between calls. |
+| Sandbox: **one call per 10 seconds** (E19). | `EisClient` waits 10.5 seconds between calls when the base URL is the sandbox (`sandboxSpacingMillis` changes it). |
 | Sample code now ships in Java, Python, and C#. | Our crypto is checked against what those samples do. |
 
 ## The big picture

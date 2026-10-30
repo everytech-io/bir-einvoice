@@ -21,9 +21,8 @@ before you have sandbox credentials.
 Status: 0.1.0. JVM target (JDK 21), plus Kotlin/Wasm for the parts that run in a browser (see
 Platforms). The source sets are laid out so Android and iOS targets can
 be added later. The crypto follows BIR's Java, Python and C# samples. The client and the mock
-have been tested in both directions against an independent Node.js implementation of the same
-protocol. That implementation is not part of this repository, so you cannot repeat that test unless
-you have your own. Nobody has run this library against the live BIR sandbox yet.
+have been tested in both directions against an independent implementation of the same protocol,
+which is not published. Nobody has run this library against the live BIR sandbox yet.
 
 ## What is in it
 
@@ -340,11 +339,14 @@ tokens; use made-up values. Security problems never go in a public issue: see
 ./gradlew publishToMavenLocal    # io.everytech:bir-einvoice:0.1.0 and bir-einvoice-mock:0.1.0
 ```
 
-Two interop tests run only when asked. They check this library against an independent
-Node.js implementation of the same protocol that is not in this repository (you need your own):
+Two optional interop tests test this library against an independent implementation of the same
+protocol, written for Node.js, which is not published. They are skipped unless one of these
+variables is set, and CI does not run them:
 
-* `BIR_EINVOICE_NODE_MOCK_CREDS=<credentials.json>`: the Kotlin client against a running Node mock.
-* `BIR_EINVOICE_NODE_DIR=<folder with src/eis/client.mjs>`: the Node client against `MockEisServer`.
+* `BIR_EINVOICE_NODE_MOCK_CREDS`: the credentials file of that implementation's running mock. The
+  Kotlin client is tested against it.
+* `BIR_EINVOICE_NODE_DIR`: the folder of that implementation. Its client is tested against
+  `MockEisServer`.
 
 ## Contributing and community
 

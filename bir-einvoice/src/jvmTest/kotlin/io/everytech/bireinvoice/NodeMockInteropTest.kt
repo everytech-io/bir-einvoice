@@ -8,9 +8,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Interop proof against an independent implementation: the Node.js mock EIS in the EveryTech
- * e-invoice app. Skipped unless BIR_EINVOICE_NODE_MOCK_CREDS names the credentials file that
- * `node tools/mock-eis.mjs <file>` wrote.
+ * Optional interop test: this client against the mock EIS of an independent implementation of the
+ * same protocol (Node.js), which is not published. Skipped unless BIR_EINVOICE_NODE_MOCK_CREDS
+ * names the credentials file that mock wrote.
  */
 class NodeMockInteropTest {
     private val credsFile: String? = System.getProperty("BIR_EINVOICE_NODE_MOCK_CREDS") ?: System.getenv("BIR_EINVOICE_NODE_MOCK_CREDS")

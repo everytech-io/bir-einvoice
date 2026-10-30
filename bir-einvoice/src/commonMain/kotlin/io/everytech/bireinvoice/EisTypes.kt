@@ -47,7 +47,7 @@ public data class EisCredentials @JvmOverloads constructor(
     public companion object {
         private fun mask(secret: String): String = if (secret.isEmpty()) "" else "****"
 
-        /** Reads the JSON shape [toJson] writes (the same keys the Node mock writes). */
+        /** Reads the JSON shape [toJson] writes. Unknown keys are ignored. */
         @JvmStatic
         public fun fromJson(text: String): EisCredentials = credentialsJson.decodeFromString(serializer(), text)
     }

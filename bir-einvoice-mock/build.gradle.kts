@@ -49,7 +49,8 @@ tasks.register<JavaExec>("run") {
 }
 
 tasks.withType<Test>().configureEach {
-    // The Node client interop test runs only when this points at the Node e-invoice folder.
+    // The optional client interop test runs only when this names the folder of an independent
+    // implementation of the protocol, which is not published.
     listOf("BIR_EINVOICE_NODE_DIR").forEach { name ->
         System.getenv(name)?.let { environment(name, it) }
         System.getProperty(name)?.let { systemProperty(name, it) }

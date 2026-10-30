@@ -89,9 +89,9 @@ If you work on a fork, clone your fork and add this repository as `upstream`.
 | `./gradlew :bir-einvoice-mock:run` | Start the standalone mock EIS |
 | `./gradlew publishToMavenLocal` | Install `io.everytech:bir-einvoice` and `bir-einvoice-mock` locally |
 
-Two interop tests run only when asked. They compare this library with a separate Node.js
-implementation of the same protocol, which is not part of this repository. See "Building" in the
-[README](README.md). You do not need them to contribute; CI does not run them.
+Two optional interop tests compare this library with an independent implementation of the same
+protocol, which is not published. They are skipped unless their variables are set (see "Building"
+in the [README](README.md)). You do not need them to contribute; CI does not run them.
 
 ## Code style
 

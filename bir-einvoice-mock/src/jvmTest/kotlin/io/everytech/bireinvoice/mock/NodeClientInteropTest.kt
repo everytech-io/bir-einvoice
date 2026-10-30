@@ -12,9 +12,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Interop proof in the other direction: the independent Node.js EIS client (from the EveryTech
- * e-invoice app) against this Kotlin mock. Skipped unless BIR_EINVOICE_NODE_DIR names that app's
- * folder (the one holding src/eis/client.mjs) and `node` is on the PATH.
+ * Optional interop test in the other direction: the client of an independent implementation of the
+ * same protocol (Node.js), which is not published, against this Kotlin mock. Skipped unless
+ * BIR_EINVOICE_NODE_DIR names that implementation's folder (the one holding src/eis/client.mjs)
+ * and `node` is on the PATH.
  */
 class NodeClientInteropTest {
     private val nodeDir: String? = System.getProperty("BIR_EINVOICE_NODE_DIR") ?: System.getenv("BIR_EINVOICE_NODE_DIR")

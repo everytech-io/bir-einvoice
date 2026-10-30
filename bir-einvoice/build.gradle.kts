@@ -36,7 +36,8 @@ kotlin {
 }
 
 tasks.withType<Test>().configureEach {
-    // The Node interop test runs only when these point at a running Node mock.
+    // The optional interop test runs only when this names the credentials file of a running mock
+    // from an independent implementation of the protocol, which is not published.
     listOf("BIR_EINVOICE_NODE_MOCK_CREDS").forEach { name ->
         System.getenv(name)?.let { environment(name, it) }
         System.getProperty(name)?.let { systemProperty(name, it) }
