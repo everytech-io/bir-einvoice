@@ -1,5 +1,6 @@
 # Developer Certificate of Origin check, with no third-party app. Every commit in a pull request
-# must carry a "Signed-off-by: Name <email>" line (git commit -s). See CONTRIBUTING.md.
+# must carry a "Signed-off-by: Name <email>" line (git commit -s) whose email is the commit
+# author's email. See CONTRIBUTING.md.
 name: dco
 
 on:
@@ -13,29 +14,44 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Check Signed-off-by lines
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          # Who opened the pull request, as GitHub knows it. Commit author names can be set to
+          # anything, so the bot exemption below never trusts them.
+          PR_USER_LOGIN: ${{ github.event.pull_request.user.login }}
+          PR_USER_TYPE: ${{ github.event.pull_request.user.type }}
         run: |
           set -u
           failed=0
+          # Dependabot cannot sign off. Its pull requests are reviewed and merged by a maintainer,
+          # and only its own commits are exempt: a commit anyone else adds to the pull request is
+          # still checked.
+          bot_email=""
+          if [ "$PR_USER_TYPE" = "Bot" ] && [ "$PR_USER_LOGIN" = "dependabot[bot]" ]; then
+            bot_email="49699333+dependabot[bot]@users.noreply.github.com"
+          fi
           for sha in $(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA"); do
             author_email="$(git log -1 --format='%ae' "$sha")"
             author_name="$(git log -1 --format='%an' "$sha")"
             subject="$(git log -1 --format='%s' "$sha")"
-            # Automated dependency updates cannot sign off; a maintainer reviews and merges them.
-            case "$author_name" in
-              *"[bot]") echo "skip   ${sha:0:7} (bot) $subject"; continue ;;
-            esac
-            if git log -1 --format='%B' "$sha" | grep -q -i -E "^Signed-off-by: .+ <[^<>]+@[^<>]+>[[:space:]]*$"; then
+            if [ -n "$bot_email" ] && [ "$author_email" = "$bot_email" ]; then
+              echo "skip   ${sha:0:7} (dependabot) $subject"
+              continue
+            fi
+            # The sign-off must name the author's own email address (compared case-insensitively).
+            if git log -1 --format='%B' "$sha" \
+              | grep -i -E "^Signed-off-by: .+ <[^<>]+@[^<>]+>[[:space:]]*$" \
+              | grep -q -i -F "<$author_email>"; then
               echo "ok     ${sha:0:7} $subject"
             else
-              echo "::error::Commit ${sha:0:7} by $author_name <$author_email> has no Signed-off-by line: $subject"
+              echo "::error::Commit ${sha:0:7} by $author_name <$author_email> has no Signed-off-by line with the author's email: $subject"
               failed=1
             fi
           done
@@ -43,7 +59,8 @@ jobs:
             cat <<'MSG'
 
           Every commit needs a sign-off that certifies the Developer Certificate of Origin
-          (https://developercertificate.org). To fix:
+          (https://developercertificate.org), with the same email address as the commit author.
+          Check that git config user.email is the address you sign off with. To fix:
 
             last commit only:      git commit --amend -s --no-edit
             all commits in the PR: git rebase --signoff origin/main
