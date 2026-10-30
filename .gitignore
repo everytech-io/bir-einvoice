@@ -4,4 +4,11 @@ build/
 *.iml
 .idea/
 local.properties
-.contract-ready
+
+# Never commit credentials or keys.
+eis-credentials.json
+mock-eis-credentials.json
+*.pem
+*.p12
+*.pfx
+*.jks
