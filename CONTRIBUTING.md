@@ -20,8 +20,8 @@ In scope:
 Not in scope:
 
 * User interfaces, invoice storage, ledgers, printing or business workflows. Those belong in the
-  application that uses the library. See
-  [everytech-io/einvoice](https://github.com/everytech-io/einvoice) for one.
+  application that uses the library. See EveryInvoice,
+  [everytech-io/everyinvoice](https://github.com/everytech-io/everyinvoice), for one.
 * Anything that talks to the live BIR sandbox or production from the test suite or CI. Tests use
   the mock and made-up values.
 * Tax or legal advice, or a claim that a payload will be accepted. The BIR's sandbox has the

@@ -28,7 +28,7 @@ info:
     AES-256-CBC details: key = the 32 ASCII bytes of the key string, IV = its first 16 characters,
     PKCS#5/7 padding, base64 output. RSA: PKCS#1 v1.5, base64 output.
   contact:
-    name: EveryTech e-invoice (open source)
+    name: EveryTech, bir-einvoice (open source)
     url: https://everytech.io
   license:
     name: Apache-2.0 (this description file only)

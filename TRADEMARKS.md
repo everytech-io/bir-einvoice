@@ -6,7 +6,7 @@ trademarks, service marks or logos of the licensor.
 
 ## What is covered
 
-* The names **EveryTech** and **EveryTech e-Invoice**.
+* The names **EveryTech** and **EveryInvoice**.
 * The EveryTech logos, and the Maven group `io.everytech` and the artifact names `bir-einvoice`
   and `bir-einvoice-mock` as published by EveryTech.
 
